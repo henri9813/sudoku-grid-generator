@@ -1,0 +1,5 @@
+package grid
+
+func Generate() {
+
+}
