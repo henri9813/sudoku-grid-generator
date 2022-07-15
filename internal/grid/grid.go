@@ -2,7 +2,6 @@ package grid
 
 import (
 	"fmt"
-	"golang.org/x/exp/slices"
 )
 
 //Grid represent the 9x9 grid
@@ -97,6 +96,14 @@ func IsValidGrid(grid Grid) bool {
 		return false
 	}
 
+	if err := grid.verifyCols(); err != nil {
+		return false
+	}
+
+	if err := grid.verifySquares(); err != nil {
+		return false
+	}
+
 	return true
 }
 
@@ -128,12 +135,15 @@ func (grid Grid) hasValidContent() bool {
 
 func (grid Grid) verifyRows() error {
 	for _, row := range grid {
-		for j, cell := range row {
-			if slices.Index(row, j+1) == -1 {
-				return fmt.Errorf(
-					"row %d has no '%d'",
-					j+1,
-					cell)
+		founded := map[int]bool{}
+
+		for column, _ := range row {
+			if _, alreadyPresent := founded[row[column]]; alreadyPresent {
+				return fmt.Errorf("duplicate %d in the row", row[column])
+			}
+
+			if row[column] != 0 {
+				founded[row[column]] = true
 			}
 		}
 	}
@@ -147,10 +157,12 @@ func (grid Grid) verifyCols() error {
 
 		for _, row := range grid {
 			if _, alreadyPresent := founded[row[column]]; alreadyPresent {
-				return fmt.Errorf("duplicate %d in the array", row[column])
+				return fmt.Errorf("duplicate %d in the column", row[column])
 			}
 
-			founded[row[column]] = true
+			if row[column] != 0 {
+				founded[row[column]] = true
+			}
 		}
 	}
 
@@ -163,11 +175,25 @@ func (grid Grid) verifySquares() error {
 
 		for _, coordinate := range squareCells {
 			if _, alreadyPresent := founded[grid[coordinate[0]][coordinate[1]]]; alreadyPresent {
-				return fmt.Errorf("duplicate %d in the array", grid[coordinate[0]][coordinate[1]])
+				return fmt.Errorf("duplicate %d in the square", grid[coordinate[0]][coordinate[1]])
 			}
 
-			founded[grid[coordinate[0]][coordinate[1]]] = true
+			if grid[coordinate[0]][coordinate[1]] != 0 {
+				founded[grid[coordinate[0]][coordinate[1]]] = true
+			}
 		}
+	}
+
+	return nil
+}
+
+func (grid *Grid) initializeEmpty() error {
+	if len(*grid) != 0 {
+		return fmt.Errorf("this grid is already initialized")
+	}
+
+	for i := 0; i < 9; i++ {
+		*grid = append(*grid, []int{0, 0, 0, 0, 0, 0, 0, 0, 0})
 	}
 
 	return nil
